@@ -12,7 +12,7 @@
         <java.version>1.7</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <main.class>pt.ulisboa.tecnico.meic.cnv.Application</main.class>
+        <main.class>pt.ulisboa.tecnico.meic.cnv.WebServer</main.class>
     </properties>
 
     <build>
