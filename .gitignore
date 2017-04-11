@@ -1,4 +1,4 @@
-
+test*.bmp
 # Created by https://www.gitignore.io/api/java,linux,maven,windows,intellij
 
 ### Intellij ###
@@ -139,3 +139,4 @@ $RECYCLE.BIN/
 /.idea/
 !/lib/BIT.jar
 /render-farm-webserver.iml
+/wood.bmp
