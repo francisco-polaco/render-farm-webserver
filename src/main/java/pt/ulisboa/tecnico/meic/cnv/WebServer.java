@@ -6,6 +6,7 @@ import com.sun.net.httpserver.HttpServer;
 import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
 
 import javax.imageio.ImageIO;
+import javax.sound.midi.SysexMessage;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
+import java.util.Scanner;
 import java.util.TreeMap;
 
 public class WebServer {
@@ -24,8 +26,20 @@ public class WebServer {
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
         server.createContext("/r.html", new MyHandler());
         server.setExecutor(null); // creates a default executor
-        System.out.println("Webserver is running @ port " + PORT);
+        bindEnterToStop();
+        System.out.println("WebServer is running in port " + PORT);
+        System.out.println("Press <Enter> to stop.");
         server.start();
+    }
+
+    private static void bindEnterToStop() {
+        new Thread(){
+            @Override
+            public void run() {
+                new Scanner(System.in).nextLine();
+                System.exit(0);
+            }
+        }.start();
     }
 
 
