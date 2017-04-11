@@ -13,10 +13,13 @@ import java.util.TreeMap;
 
 public class WebServer {
 
+    private static final int PORT = 8000;
+
     public static void main(String[] args) throws Exception {
-        HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
         server.createContext("/r.html", new MyHandler());
         server.setExecutor(null); // creates a default executor
+        System.out.println("Webserver is running @ port " + PORT);
         server.start();
     }
 
