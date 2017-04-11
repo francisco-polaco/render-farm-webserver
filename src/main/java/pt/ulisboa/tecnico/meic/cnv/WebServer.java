@@ -52,15 +52,22 @@ public class WebServer {
             String outputFilename = parameterMap.get("f").replace(".txt", ".bmp");
             try {
                 File f = new File(outputFilename);
-                BufferedImage bimg = ImageIO.read(f);
-                if(bimg.getWidth() >= Integer.valueOf(parameterMap.get("sc")) &&
-                        bimg.getHeight() >= Integer.valueOf(parameterMap.get("sr")) &&
-                        bimg.getWidth() / bimg.getHeight() ==
-                                Integer.valueOf(parameterMap.get("sc")) / Integer.valueOf(parameterMap.get("sr"))){
-                    // a nossa imagem e maior ou igual do que estao a pedir e o msm ratio.
-                    System.out.println("OMG q FIXE!");
-                    dispatch(f);
-                    return;
+                if(f.exists()) {
+                    BufferedImage bimg = ImageIO.read(f);
+                    if (canBeResized(bimg)) {
+                        System.out.println("I have a bigger file in cache, let's resize it.");
+                        int type = bimg.getType() == 0 ? BufferedImage.TYPE_INT_ARGB : bimg.getType();
+                        BufferedImage bufferedImage =
+                                resizeImage(bimg, type, Integer.valueOf(parameterMap.get("sc")), Integer.valueOf(parameterMap.get("sr")));
+                        String newFilename = parameterMap.get("sc") + parameterMap.get("sr") + outputFilename;
+                        ImageIO.write(bufferedImage, "bmp", new File(newFilename));
+                        dispatch(new File(newFilename));
+                        return;
+                    }else if(hasSameSize(bimg)){
+                        System.out.println("I've found the file in cache.");
+                        dispatch(f);
+                        return;
+                    }
                 }
             }catch (IOException e) {
                 e.printStackTrace();
@@ -81,6 +88,18 @@ public class WebServer {
             dispatch(new File(outputFilename));
         }
 
+        private boolean hasSameSize(BufferedImage bimg) {
+            return bimg.getWidth() == Integer.valueOf(parameterMap.get("sc")) &&
+                    bimg.getHeight() == Integer.valueOf(parameterMap.get("sr"));
+        }
+
+        private boolean canBeResized(BufferedImage bimg) {
+            return bimg.getWidth() > Integer.valueOf(parameterMap.get("sc")) &&
+                    bimg.getHeight() > Integer.valueOf(parameterMap.get("sr")) &&
+                    bimg.getWidth() / bimg.getHeight() ==
+                            Integer.valueOf(parameterMap.get("sc")) / Integer.valueOf(parameterMap.get("sr"));
+        }
+
         private void dispatch(File file) {
             try {
                 httpExchange.sendResponseHeaders(200, file.length());
@@ -99,6 +118,15 @@ public class WebServer {
                     parameterMap.put(parameters[0], parameters[1]);
                 }
             }
+        }
+
+        private BufferedImage resizeImage(BufferedImage originalImage, int type, int width, int height){
+            BufferedImage resizedImage = new BufferedImage(width, height, type);
+            Graphics2D g = resizedImage.createGraphics();
+            g.drawImage(originalImage, 0, 0, width, height, null);
+            g.dispose();
+
+            return resizedImage;
         }
 
         private void writeResponse(HttpExchange t, File file) throws IOException {
