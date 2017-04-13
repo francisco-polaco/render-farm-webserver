@@ -116,6 +116,7 @@ public class Instrumentation {
             b.not_taken = b.not_taken.add(BigInteger.ONE);
     }
 
+
     /*
     Intuition: using number of instructions as a metric is to expensive - it creates to much indirection
                basic blocks are indirectly considered in order to extract the branch metrics
