@@ -1,9 +1,14 @@
-import BIT.highBIT.BasicBlock;
-import BIT.highBIT.ClassInfo;
-import BIT.highBIT.Routine;
+import BIT.highBIT.*;
+import BIT.lowBIT.Attribute_Info;
+import BIT.lowBIT.Cp_Info;
+import BIT.lowBIT.Field_Info;
+import pt.ulisboa.tecnico.meic.cnv.BestThread;
 import pt.ulisboa.tecnico.meic.cnv.WebServer;
 
 import java.io.*;
+import java.math.BigInteger;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Enumeration;
 
@@ -12,18 +17,12 @@ import java.util.Enumeration;
  */
 public class Instrumentation {
 
+
     private static final String classPath = System.getProperty("user.dir") + "/target/classes/raytracer/";
-
-    private static PrintWriter out = null;
     private static final String METRICS_FILE = "Metrics.txt";
+    private static BigInteger i_count = BigInteger.ZERO, b_count = BigInteger.ZERO, m_count = BigInteger.ZERO;
 
-    private static int i_count = 0, b_count = 0, m_count = 0;
-
-    /* main reads in all the files class files present in the input directory,
-     * instruments them, and outputs them to the specified output directory.
-     */
     public static void main(String argv[]) {
-        System.out.println(classPath);
 
         File file_in = new File(classPath);
         if(!file_in.exists()) {
@@ -31,19 +30,19 @@ public class Instrumentation {
             return;
         }
 
-        System.out.println("Creating the metrics file!");
-        File metricsFIle = new File(METRICS_FILE);
-        if(metricsFIle.exists())
-            metricsFIle.delete();
+        createMetricsFile();
+
+        instrumentRayTracer(file_in.list());
+
         try {
-            metricsFIle.createNewFile();
-        } catch (IOException e) {
+            WebServer.main(new String[]{});
+        } catch (Exception e) {
             e.printStackTrace();
+            System.err.println("Error calling the webserver!");
         }
+    }
 
-
-        String infilenames[] = file_in.list();
-
+    private static void instrumentRayTracer(String[] infilenames) {
         for (int i = 0; i < infilenames.length; i++) {
             String infilename = infilenames[i];
             if (infilename.endsWith(".class")) {
@@ -51,9 +50,8 @@ public class Instrumentation {
 
                 ClassInfo ci = new ClassInfo(classPath + System.getProperty("file.separator") + infilename);
 
-                // loop through all the routines
-                // see java.util.Enumeration for more information on Enumeration class
                 for (Enumeration e = ci.getRoutines().elements(); e.hasMoreElements(); ) {
+
                     Routine routine = (Routine) e.nextElement();
 
                     routine.addBefore(Instrumentation.class.getCanonicalName(), "mcount", new Integer(1));
@@ -68,42 +66,52 @@ public class Instrumentation {
                 ci.write(classPath + System.getProperty("file.separator") + infilename);
             }
         }
-        try {
-            WebServer.main(new String[]{});
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     public static synchronized void printICount(String foo) {
         System.out.println(i_count + " instructions in " + b_count + " basic blocks were executed in " + m_count + " methods.");
     }
 
-
     public static synchronized void count(int incr) {
-        i_count += incr;
-        b_count++;
+        i_count = i_count.add(BigInteger.valueOf(incr));
+        b_count = b_count.add(BigInteger.ONE);
     }
 
     public static synchronized void mcount(int incr) {
-        m_count++;
+        m_count = m_count.add(BigInteger.ONE);
     }
 
     public static synchronized void writeFile(String foo){
         try {
-            out = new PrintWriter(new FileWriter(METRICS_FILE, true));
+            PrintWriter out = new PrintWriter(new FileWriter(METRICS_FILE, true));
             out.append(new Date().toString() + "\n");
             out.append("Instruction count: " + i_count + "\n");
             out.append("Basic blocks: " + b_count + "\n");
+            out.append("Methods: " + m_count + "\n");
             out.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        i_count = 0;
-        b_count = 0;
+        i_count = b_count = m_count = BigInteger.ZERO;
     }
+
+
+    // aux functions
+
+    private static void createMetricsFile() {
+        System.out.println("Creating the metrics file!");
+        File metricsFIle = new File(METRICS_FILE);
+        if(metricsFIle.exists())
+            metricsFIle.delete();
+        try {
+            metricsFIle.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
 
 }
