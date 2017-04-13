@@ -11,16 +11,25 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.Hashtable;
 
 /**
  * Created by diogo on 11-04-2017.
  */
+
 public class Instrumentation {
 
+    static class Branch {
+        public BigInteger taken = BigInteger.ZERO;
+        public BigInteger not_taken = BigInteger.ZERO;
+    }
 
     private static final String classPath = System.getProperty("user.dir") + "/target/classes/raytracer/";
     private static final String METRICS_FILE = "Metrics.txt";
-    private static BigInteger i_count = BigInteger.ZERO, b_count = BigInteger.ZERO, m_count = BigInteger.ZERO;
+    private static BigInteger m_count = BigInteger.ZERO;
+    private static Hashtable branch = new Hashtable();
+    private static int pc;
+
 
     public static void main(String argv[]) {
 
@@ -58,23 +67,18 @@ public class Instrumentation {
 
                     for (Enumeration b = routine.getBasicBlocks().elements(); b.hasMoreElements(); ) {
                         BasicBlock bb = (BasicBlock) b.nextElement();
-                        bb.addBefore(Instrumentation.class.getCanonicalName(), "count", new Integer(bb.size()));
+                        Instruction instr = (Instruction)routine.getInstructions()[bb.getEndAddress()];
+                        short instr_type = InstructionTable.InstructionTypeTable[instr.getOpcode()];
+                        if (instr_type == InstructionTable.CONDITIONAL_INSTRUCTION) {
+                            instr.addBefore("Instrumentation", "Offset", new Integer(instr.getOffset()));
+                            instr.addBefore("Instrumentation", "Branch", new String("BranchOutcome"));
+                        }
                     }
                 }
-                ci.addAfter(Instrumentation.class.getCanonicalName(), "printICount", ci.getClassName());
                 ci.addAfter(Instrumentation.class.getCanonicalName(), "writeFile", infilename.substring(0, infilename.indexOf(".class")));
                 ci.write(classPath + System.getProperty("file.separator") + infilename);
             }
         }
-    }
-
-    public static synchronized void printICount(String foo) {
-        System.out.println(i_count + " instructions in " + b_count + " basic blocks were executed in " + m_count + " methods.");
-    }
-
-    public static synchronized void count(int incr) {
-        i_count = i_count.add(BigInteger.valueOf(incr));
-        b_count = b_count.add(BigInteger.ONE);
     }
 
     public static synchronized void mcount(int incr) {
@@ -85,18 +89,54 @@ public class Instrumentation {
         try {
             PrintWriter out = new PrintWriter(new FileWriter(METRICS_FILE, true));
             out.append(new Date().toString() + "\n");
-            out.append("Instruction count: " + i_count + "\n");
-            out.append("Basic blocks: " + b_count + "\n");
             out.append("Methods: " + m_count + "\n");
+            out.append(brachStatistics());
             out.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        i_count = b_count = m_count = BigInteger.ZERO;
     }
 
+    public static void Offset(int offset) {
+        pc = offset;
+    }
+
+    public static void Branch(int brOutcome) {
+        Integer n = new Integer(pc);
+        Branch b = (Branch) branch.get(n);
+        if (b == null) {
+            b = new Branch();
+            branch.put(n,b);
+        }
+        if (brOutcome == 0)
+            b.taken = b.taken.add(BigInteger.ONE);
+        else
+            b.not_taken = b.not_taken.add(BigInteger.ONE);
+    }
+
+    /*
+    Intuition: using number of instructions as a metric is to expensive - it creates to much indirection
+               basic blocks are indirectly considered in order to extract the branch metrics
+               number of calls to methods - calls are expensive, the value of having the metric compensates the performance trade-off
+               branches: our application heavy load falls into his cycles
+                taken  & not taken -> are a good aproximation of the number of iterations (depending on the cycle)
+    */
+    public static String brachStatistics() {
+        BigInteger total = BigInteger.ZERO, taken = BigInteger.ZERO, ntaken = BigInteger.ZERO;
+        for (Enumeration e = branch.keys(); e.hasMoreElements(); ) {
+            Integer key = (Integer) e.nextElement();
+            Branch b = (Branch) branch.get(key);
+            total = total.add(b.taken).add(b.not_taken);
+            taken = taken.add(b.taken);
+            ntaken = ntaken.add(b.not_taken);
+        }
+        // reset the hashtable
+        branch = new Hashtable();
+        return "taken: " + taken + " (" + taken.multiply(BigInteger.valueOf(100)).divide(total) + "%)\n" +
+                "not taken: " + ntaken + " (" + ntaken.multiply(BigInteger.valueOf(100)).divide(total) + "%)\n";
+    }
 
     // aux functions
 
@@ -111,7 +151,5 @@ public class Instrumentation {
             e.printStackTrace();
         }
     }
-
-
 
 }
