@@ -1,14 +1,9 @@
 import BIT.highBIT.*;
-import BIT.lowBIT.Attribute_Info;
-import BIT.lowBIT.Cp_Info;
-import BIT.lowBIT.Field_Info;
-import pt.ulisboa.tecnico.meic.cnv.BestThread;
+import pt.ulisboa.tecnico.meic.cnv.RepositoryService;
 import pt.ulisboa.tecnico.meic.cnv.WebServer;
 
 import java.io.*;
 import java.math.BigInteger;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -32,6 +27,8 @@ public class Instrumentation {
 
 
     public static void main(String argv[]) {
+
+        RepositoryService rs = new RepositoryService();
 
         File file_in = new File(classPath);
         if(!file_in.exists()) {
@@ -122,7 +119,7 @@ public class Instrumentation {
                basic blocks are indirectly considered in order to extract the branch metrics
                number of calls to methods - calls are expensive, the value of having the metric compensates the performance trade-off
                branches: our application heavy load falls into his cycles
-                taken  & not taken -> are a good aproximation of the number of iterations (depending on the cycle)
+                taken  & not taken -> are a good aproximation of the number of iterations (not taken particulary)
     */
     public static String brachStatistics() {
         BigInteger total = BigInteger.ZERO, taken = BigInteger.ZERO, ntaken = BigInteger.ZERO;
@@ -135,9 +132,10 @@ public class Instrumentation {
         }
         // reset the hashtable
         branch = new Hashtable();
-        return "taken: " + taken + " (" + taken.multiply(BigInteger.valueOf(100)).divide(total) + "%)\n" +
-                "not taken: " + ntaken + " (" + ntaken.multiply(BigInteger.valueOf(100)).divide(total) + "%)\n";
+        return "taken: " + taken + "\n" +
+                "not taken: " + ntaken + "\n";
     }
+
 
     // aux functions
 
