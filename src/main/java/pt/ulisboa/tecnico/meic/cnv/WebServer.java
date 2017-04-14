@@ -3,6 +3,9 @@ package pt.ulisboa.tecnico.meic.cnv;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Options;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -12,9 +15,17 @@ import java.util.Scanner;
 
 public class WebServer {
 
-    private static final int PORT = 8000;
+    private static int PORT = 8000;
 
     public static void main(String[] args) throws Exception {
+        Options options = new Options();
+        options.addOption("p", true, "Port to listen for remote requests");
+        CommandLine cmd = (new DefaultParser()).parse(options, args);
+
+        String port = cmd.getOptionValue("p");
+        System.out.println(port);
+        if(port != null) PORT = Integer.valueOf(port);
+
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
         server.createContext("/r.html", new MyHandler());
         server.setExecutor(null); // creates a default executor

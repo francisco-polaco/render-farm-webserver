@@ -50,7 +50,7 @@ public class Instrumentation {
         }
     };
 
-    public static void main(String argv[]) {
+    public static void main(String[] args) {
 
         File file_in = new File(classPath);
         if(!file_in.exists()) {
@@ -63,7 +63,7 @@ public class Instrumentation {
         instrumentRayTracer(file_in.list());
 
         try {
-            WebServer.main(new String[]{});
+            WebServer.main(args);
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("Error calling the webserver!");
