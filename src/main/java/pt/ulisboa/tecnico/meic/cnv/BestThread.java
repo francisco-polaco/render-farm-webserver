@@ -19,7 +19,7 @@ public class BestThread extends Thread {
 
     @Override
     public void run() {
-        parseRequest();
+        parseRequest(httpExchange.getRequestURI().getQuery(), parameterMap);
         String outputFilename = parameterMap.get("f").replace(".txt", ".bmp");
 
         String[] argsToRaytrace = new String[]{
@@ -58,13 +58,12 @@ public class BestThread extends Thread {
         }
     }
 
-    private void parseRequest() {
-        String query = httpExchange.getRequestURI().getQuery();
+    public static void parseRequest(String query, TreeMap<String, String> paramsMap) {
         String[] args = query.split("&");
         for (String arg : args) {
             String[] parameters = arg.split("=");
             if (parameters.length == 2) {
-                parameterMap.put(parameters[0], parameters[1]);
+                paramsMap.put(parameters[0], parameters[1]);
             }
         }
     }

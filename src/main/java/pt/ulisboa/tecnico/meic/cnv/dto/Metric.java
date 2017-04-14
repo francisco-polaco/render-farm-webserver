@@ -1,5 +1,6 @@
 package pt.ulisboa.tecnico.meic.cnv.dto;
 
+import java.lang.reflect.Field;
 import java.math.BigInteger;
 
 /**
@@ -7,43 +8,47 @@ import java.math.BigInteger;
  */
 public class Metric {
 
+    private String instance;
     private BigInteger m_count;
     private BigInteger taken;
     private BigInteger not_taken;
+    private String file;
+    private Integer sc;
+    private Integer sr;
+    private Integer wc;
+    private Integer wr;
+    private Integer coff;
+    private Integer roff;
 
-    public Metric(BigInteger m_count, BigInteger taken, BigInteger not_taken) {
+    public Metric(String instance, BigInteger m_count, BigInteger taken, BigInteger not_taken, String file, Integer sceneColumns,
+                  Integer sceneRows, Integer windowColumns, Integer windowRows, Integer columnOffset, Integer rowOffset) {
+        this.instance = instance;
         this.m_count = m_count;
         this.taken = taken;
         this.not_taken = not_taken;
-    }
-
-    public BigInteger getM_count() {
-        return m_count;
-    }
-
-    public void setM_count(BigInteger m_count) {
-        this.m_count = m_count;
-    }
-
-    public BigInteger getTaken() {
-        return taken;
-    }
-
-    public void setTaken(BigInteger taken) {
-        this.taken = taken;
-    }
-
-    public BigInteger getNot_taken() {
-        return not_taken;
-    }
-
-    public void setNot_taken(BigInteger not_taken) {
-        this.not_taken = not_taken;
+        this.file = file;
+        this.sc = sceneColumns;
+        this.sr = sceneRows;
+        this.wc = windowColumns;
+        this.wr = windowRows;
+        this.coff = columnOffset;
+        this.roff = rowOffset;
     }
 
     @Override
     public String toString() {
-        return "[m_count: " + m_count + ", taken: " + taken + ", not_taken: " + not_taken + "]";
+        String output = "[";
+        Field[] fields = this.getClass().getDeclaredFields();
+        for(int i = 0; i < fields.length; i++) {
+            fields[i].setAccessible(true);
+            try {
+                String field_info = fields[i].getName() + ": " + fields[i].get(this).toString();
+                output += i == fields.length - 1 ? field_info : field_info + ", ";
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+        output += "]";
+        return output;
     }
-
 }

@@ -1,34 +1,56 @@
 import BIT.highBIT.*;
+import pt.ulisboa.tecnico.meic.cnv.BestThread;
 import pt.ulisboa.tecnico.meic.cnv.RepositoryService;
 import pt.ulisboa.tecnico.meic.cnv.WebServer;
+import pt.ulisboa.tecnico.meic.cnv.dto.Metric;
 
 import java.io.*;
 import java.math.BigInteger;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.TreeMap;
 
 /**
  * Created by diogo on 11-04-2017.
  */
 
-public class Instrumentation {
+class Branch {
+    BigInteger taken = BigInteger.ZERO;
+    BigInteger not_taken = BigInteger.ZERO;
+}
 
-    static class Branch {
-        public BigInteger taken = BigInteger.ZERO;
-        public BigInteger not_taken = BigInteger.ZERO;
-    }
+public class Instrumentation {
 
     private static final String classPath = System.getProperty("user.dir") + "/target/classes/raytracer/";
     private static final String METRICS_FILE = "Metrics.txt";
-    private static BigInteger m_count = BigInteger.ZERO;
-    private static Hashtable branch = new Hashtable();
-    private static int pc;
+    private static final RepositoryService repositoryService = new RepositoryService();
 
+    /* ThreadLocal gives us local context for each thread in static variables */
+    private static ThreadLocal<BigInteger> m_count = new ThreadLocal<BigInteger>() {
+        @Override
+        protected BigInteger initialValue()
+        {
+            return BigInteger.ZERO;
+        }
+    };
+
+    private static ThreadLocal<Hashtable> branch = new ThreadLocal<Hashtable>() {
+        @Override
+        protected Hashtable initialValue()
+        {
+            return new Hashtable();
+        }
+    };
+
+    private static ThreadLocal<Integer> pc = new ThreadLocal<Integer>() {
+        @Override
+        protected Integer initialValue()
+        {
+            return new Integer(0);
+        }
+    };
 
     public static void main(String argv[]) {
-
-        RepositoryService rs = new RepositoryService();
 
         File file_in = new File(classPath);
         if(!file_in.exists()) {
@@ -79,33 +101,56 @@ public class Instrumentation {
     }
 
     public static synchronized void mcount(int incr) {
-        m_count = m_count.add(BigInteger.ONE);
+        m_count.set(m_count.get().add(BigInteger.ONE));
     }
 
     public static synchronized void writeFile(String foo){
-        try {
+        /*try {
             PrintWriter out = new PrintWriter(new FileWriter(METRICS_FILE, true));
-            out.append(new Date().toString() + "\n");
-            out.append("Methods: " + m_count + "\n");
+            out.append(Thread.currentThread().getName() + "\n");
+            out.append("Methods: " + m_count.get() + "\n");
             out.append(brachStatistics());
+            reset();
             out.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
+        // without file
+        Branch data = branchStats();
+        TreeMap<String, String> params = new TreeMap<>();
+        BestThread.parseRequest(Thread.currentThread().getName(), params);
+
+        Metric metric = new Metric(
+                WebServer.getHostname(),
+                m_count.get(),
+                data.taken,
+                data.not_taken,
+                params.get("f"),
+                Integer.valueOf(params.get("sc")),
+                Integer.valueOf(params.get("sr")),
+                Integer.valueOf(params.get("wc")),
+                Integer.valueOf(params.get("wr")),
+                Integer.valueOf(params.get("coff")),
+                Integer.valueOf(params.get("roff")));
+
+        repositoryService.addMetric(params.get("requestid"), metric);
+    }
+
+    private static void reset() {
+        m_count.set(BigInteger.ZERO);
+        branch.set(new Hashtable());
     }
 
     public static void Offset(int offset) {
-        pc = offset;
+        pc.set(new Integer(offset));
     }
 
     public static void Branch(int brOutcome) {
-        Integer n = new Integer(pc);
-        Branch b = (Branch) branch.get(n);
+        Integer n = pc.get();
+        Branch b = (Branch) branch.get().get(n);
         if (b == null) {
             b = new Branch();
-            branch.put(n,b);
+            branch.get().put(n, b);
         }
         if (brOutcome == 0)
             b.taken = b.taken.add(BigInteger.ONE);
@@ -113,27 +158,37 @@ public class Instrumentation {
             b.not_taken = b.not_taken.add(BigInteger.ONE);
     }
 
-
-    /*
-    Intuition: using number of instructions as a metric is to expensive - it creates to much indirection
-               basic blocks are indirectly considered in order to extract the branch metrics
-               number of calls to methods - calls are expensive, the value of having the metric compensates the performance trade-off
-               branches: our application heavy load falls into his cycles
-                taken  & not taken -> are a good aproximation of the number of iterations (not taken particulary)
-    */
+    /* Just for compatibility with 1st delivery */
     public static String brachStatistics() {
         BigInteger total = BigInteger.ZERO, taken = BigInteger.ZERO, ntaken = BigInteger.ZERO;
-        for (Enumeration e = branch.keys(); e.hasMoreElements(); ) {
+        for (Enumeration e = branch.get().keys(); e.hasMoreElements(); ) {
             Integer key = (Integer) e.nextElement();
-            Branch b = (Branch) branch.get(key);
+            Branch b = (Branch) branch.get().get(key);
             total = total.add(b.taken).add(b.not_taken);
             taken = taken.add(b.taken);
             ntaken = ntaken.add(b.not_taken);
         }
-        // reset the hashtable
-        branch = new Hashtable();
         return "taken: " + taken + "\n" +
                 "not taken: " + ntaken + "\n";
+    }
+
+    /*
+    Intuition: using number of instructions as a metric is to expensive - it creates to much indirection
+            basic blocks are indirectly considered in order to extract the branch metrics
+            number of calls to methods - calls are expensive, the value of having the metric compensates the performance trade-off
+            branches: our application heavy load falls into his cycles
+             taken  & not taken -> are a good aproximation of the number of iterations (not taken particulary)
+    */
+    private static Branch branchStats() {
+        Branch accumulate = new Branch();
+        accumulate.taken = accumulate.not_taken = BigInteger.ZERO;
+        for (Enumeration e = branch.get().keys(); e.hasMoreElements(); ) {
+            Integer key = (Integer) e.nextElement();
+            Branch b = (Branch) branch.get().get(key);
+            accumulate.taken = accumulate.taken.add(b.taken);
+            accumulate.not_taken = accumulate.not_taken.add(b.not_taken);
+        }
+        return accumulate;
     }
 
 

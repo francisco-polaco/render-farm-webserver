@@ -5,7 +5,9 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.Scanner;
 
 public class WebServer {
@@ -37,7 +39,22 @@ public class WebServer {
         @Override
         public void handle(HttpExchange t) throws IOException {
             BestThread bestThread = new BestThread(t);
+            bestThread.setName(t.getRequestURI().getQuery());
             bestThread.start();
         }
+    }
+
+    public static String getHostname() {
+        String hostname = "";
+        try
+        {
+            hostname = InetAddress.getLocalHost().getHostName();
+        }
+        catch (UnknownHostException e)
+        {
+            System.err.println("Hostname can not be resolved!");
+            e.printStackTrace();
+        }
+        return hostname;
     }
 }
