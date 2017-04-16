@@ -17,7 +17,15 @@ public class WebServerThread extends Thread {
     WebServerThread(HttpExchange httpExchange) {
         this.httpExchange = httpExchange;
         parameterMap = new TreeMap<>();
-        filenameSuffix = String.valueOf(new Random().nextInt());
+        Random random = new Random();
+        String suffix;
+        synchronized (WebServer.suffixesInUse){
+            do{
+                suffix = String.valueOf(random.nextInt());
+            }while(WebServer.suffixesInUse.contains(suffix));
+            WebServer.suffixesInUse.add(suffix);
+        }
+        filenameSuffix = suffix;
     }
 
     @Override
@@ -40,6 +48,13 @@ public class WebServerThread extends Thread {
             dispatch(e.getMessage());
             e.printStackTrace();
         }
+        reply(outputFilename);
+        synchronized (WebServer.suffixesInUse){
+            WebServer.suffixesInUse.remove(filenameSuffix);
+        }
+    }
+
+    private void reply(String outputFilename) {
         final File f = new File(outputFilename);
         if(f.exists()) {
             dispatch(f);

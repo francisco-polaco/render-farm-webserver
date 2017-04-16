@@ -11,11 +11,14 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class WebServer {
 
     private static int PORT = 8000;
+
+    static ArrayList<String> suffixesInUse = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
         Options options = new Options();
