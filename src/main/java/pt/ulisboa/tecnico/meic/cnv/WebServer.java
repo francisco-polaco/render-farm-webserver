@@ -18,7 +18,7 @@ public class WebServer {
 
     private static int PORT = 8000;
 
-    static ArrayList<String> suffixesInUse = new ArrayList<>();
+    static final ArrayList<String> suffixesInUse = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
         Options options = new Options();
