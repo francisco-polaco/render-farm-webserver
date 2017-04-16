@@ -49,9 +49,9 @@ public class WebServer {
     static class MyHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
-            BestThread bestThread = new BestThread(t);
-            bestThread.setName(t.getRequestURI().getQuery());
-            bestThread.start();
+            WebServerThread webServerThread = new WebServerThread(t);
+            webServerThread.setName(t.getRequestURI().getQuery());
+            webServerThread.start();
         }
     }
 

@@ -1,5 +1,5 @@
 import BIT.highBIT.*;
-import pt.ulisboa.tecnico.meic.cnv.BestThread;
+import pt.ulisboa.tecnico.meic.cnv.WebServerThread;
 import pt.ulisboa.tecnico.meic.cnv.RepositoryService;
 import pt.ulisboa.tecnico.meic.cnv.WebServer;
 import pt.ulisboa.tecnico.meic.cnv.dto.Metric;
@@ -118,7 +118,7 @@ public class Instrumentation {
         // without file
         Branch data = branchStats();
         TreeMap<String, String> params = new TreeMap<>();
-        BestThread.parseRequest(Thread.currentThread().getName(), params);
+        WebServerThread.parseRequest(Thread.currentThread().getName(), params);
 
         Metric metric = new Metric(
                 WebServer.getHostname(),

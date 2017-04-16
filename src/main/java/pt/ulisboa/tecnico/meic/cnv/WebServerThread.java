@@ -6,21 +6,24 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.util.Random;
 import java.util.TreeMap;
 
-public class BestThread extends Thread {
+public class WebServerThread extends Thread {
     private HttpExchange httpExchange;
     private TreeMap<String, String> parameterMap;
+    private String filenameSuffix;
 
-    BestThread(HttpExchange httpExchange) {
+    WebServerThread(HttpExchange httpExchange) {
         this.httpExchange = httpExchange;
         parameterMap = new TreeMap<>();
+        filenameSuffix = String.valueOf(new Random().nextInt());
     }
 
     @Override
     public void run() {
         parseRequest(httpExchange.getRequestURI().getQuery(), parameterMap);
-        String outputFilename = parameterMap.get("f").replace(".txt", ".bmp");
+        String outputFilename = parameterMap.get("f").replace(".txt", filenameSuffix + ".bmp");
 
         String[] argsToRaytrace = new String[]{
                 parameterMap.get("f"),
