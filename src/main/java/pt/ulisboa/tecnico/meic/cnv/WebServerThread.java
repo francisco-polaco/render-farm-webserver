@@ -40,7 +40,22 @@ public class WebServerThread extends Thread {
             dispatch(e.getMessage());
             e.printStackTrace();
         }
-        dispatch(new File(outputFilename));
+        final File f = new File(outputFilename);
+        if(f.exists()) {
+            dispatch(f);
+            new Thread(){
+                @Override
+                public void run() {
+                    f.delete();
+                }
+            }.start();
+        }else {
+            try {
+                writeResponse(httpExchange, "Ups... We lost your rendered file!");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void dispatch(File file) {
