@@ -16,7 +16,7 @@ import java.util.Scanner;
 
 public class WebServer {
 
-    private static int PORT = 8000;
+    private static int PORT = 8001;
 
     static final ArrayList<String> suffixesInUse = new ArrayList<>();
 
