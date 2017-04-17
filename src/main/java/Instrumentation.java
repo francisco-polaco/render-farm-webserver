@@ -54,7 +54,8 @@ public class Instrumentation {
             return;
         }
 
-        createMetricsFile();
+        // We use dynamoDb, only for Checkpoint/debug purposes
+        // createMetricsFile();
 
         instrumentRayTracer(file_in.list());
 
