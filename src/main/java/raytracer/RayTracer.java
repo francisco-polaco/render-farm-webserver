@@ -7,7 +7,6 @@ import javax.imageio.ImageIO;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Scanner;
@@ -154,12 +153,8 @@ public class RayTracer {
 			executor.shutdown();
 			executor.awaitTermination(5, TimeUnit.MINUTES);
 		} else {
-			long tempo = System.currentTimeMillis();
 			for(int r = 0;r < wrows; r++) {
-				if(r % 5 == 0) {
-					Log.info((wrows - r) + " rows left to trace. " + (System.currentTimeMillis() - tempo));
-					tempo = System.currentTimeMillis();
-				}
+				if(r % 5 == 0) Log.info((wrows - r) + " rows left to trace.");
 				for(int c = 0;c < wcols; c++) {
 					image.setRGB(c, r, getPixelColor(c+coff, r+roff).getRGB());
 				}
@@ -196,7 +191,7 @@ public class RayTracer {
 
 
 	public void readScene(File file) throws FileNotFoundException {
-		Scanner scanner = new Scanner(file).useLocale(Locale.US); // Had to change this to work on Windows :D
+		Scanner scanner = new Scanner(file).useLocale(Locale.US);
 
 		// read view
 		Point eye = readPoint(scanner);

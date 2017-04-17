@@ -14,18 +14,15 @@ import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Created by diogo on 14-04-2017.
- */
 public class RepositoryService {
 
-    private AmazonDynamoDB repository;
     private final String TABLE_NAME = "Metrics";
     private final long READ_CAPACITY = 1L;
     private final long WRITE_CAPACITY = 1L;
     private final String PRIMARY_KEY_NAME = "id";
+    private AmazonDynamoDB repository;
 
-    public RepositoryService(){
+    public RepositoryService() {
         AWSCredentials credentials = null;
         try {
             credentials = new ProfileCredentialsProvider().getCredentials();
@@ -43,9 +40,9 @@ public class RepositoryService {
     private void createTable() {
         CreateTableRequest createTableRequest =
                 new CreateTableRequest().withTableName(TABLE_NAME)
-                .withKeySchema(new KeySchemaElement().withAttributeName(PRIMARY_KEY_NAME).withKeyType(KeyType.HASH))
-                .withAttributeDefinitions(new AttributeDefinition().withAttributeName(PRIMARY_KEY_NAME).withAttributeType(ScalarAttributeType.S))
-                .withProvisionedThroughput(new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY).withWriteCapacityUnits(WRITE_CAPACITY));
+                        .withKeySchema(new KeySchemaElement().withAttributeName(PRIMARY_KEY_NAME).withKeyType(KeyType.HASH))
+                        .withAttributeDefinitions(new AttributeDefinition().withAttributeName(PRIMARY_KEY_NAME).withAttributeType(ScalarAttributeType.S))
+                        .withProvisionedThroughput(new ProvisionedThroughput().withReadCapacityUnits(READ_CAPACITY).withWriteCapacityUnits(WRITE_CAPACITY));
 
         // Create table if it does not exist yet
         TableUtils.createTableIfNotExists(repository, createTableRequest);
@@ -62,13 +59,13 @@ public class RepositoryService {
         Map<String, AttributeValue> item = newItem(id, metric);
         PutItemRequest putItemRequest = new PutItemRequest(TABLE_NAME, item);
         PutItemResult putItemResult = repository.putItem(putItemRequest);
-        if(putItemResult.toString().equals("{}"))
+        if (putItemResult.toString().equals("{}"))
             System.out.println("Successfully added item with id = " + id + ", and Metric = " + metric);
         else
             System.out.println("Result: " + putItemResult);
     }
 
-    private Map<String, AttributeValue> newItem(String id, Metric metric)  {
+    private Map<String, AttributeValue> newItem(String id, Metric metric) {
         Map<String, AttributeValue> items = new LinkedHashMap<>();
         items.put(PRIMARY_KEY_NAME, new AttributeValue(id));
         for (Field field : metric.getClass().getDeclaredFields()) {
@@ -83,7 +80,7 @@ public class RepositoryService {
     }
 
     /*
-    only for construction purposes, when I screw up the table creation!
+    * Only for construction purposes
     */
     private void deleteTable() {
         DeleteTableRequest deleteTableRequest = new DeleteTableRequest(TABLE_NAME);

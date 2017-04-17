@@ -3,9 +3,6 @@ package pt.ulisboa.tecnico.meic.cnv.dto;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
 
-/**
- * Created by diogo on 14-04-2017.
- */
 public class Metric {
 
     private String instance;
@@ -39,7 +36,7 @@ public class Metric {
     public String toString() {
         String output = "[";
         Field[] fields = this.getClass().getDeclaredFields();
-        for(int i = 0; i < fields.length; i++) {
+        for (int i = 0; i < fields.length; i++) {
             fields[i].setAccessible(true);
             try {
                 String field_info = fields[i].getName() + ": " + fields[i].get(this).toString();

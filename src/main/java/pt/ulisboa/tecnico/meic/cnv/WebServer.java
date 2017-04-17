@@ -16,9 +16,8 @@ import java.util.Scanner;
 
 public class WebServer {
 
-    private static int PORT = 8000;
-
     static final ArrayList<String> suffixesInUse = new ArrayList<>();
+    private static int PORT = 8000;
 
     public static void main(String[] args) throws Exception {
         Options options = new Options();
@@ -26,8 +25,7 @@ public class WebServer {
         CommandLine cmd = (new DefaultParser()).parse(options, args);
 
         String port = cmd.getOptionValue("p");
-        System.out.println(port);
-        if(port != null) PORT = Integer.valueOf(port);
+        if (port != null) PORT = Integer.valueOf(port);
 
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
         server.createContext("/r.html", new MyHandler());
@@ -48,6 +46,16 @@ public class WebServer {
         }.start();
     }
 
+    public static String getHostname() {
+        String hostname = "";
+        try {
+            hostname = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            System.err.println("Hostname can not be resolved!");
+            e.printStackTrace();
+        }
+        return hostname;
+    }
 
     static class MyHandler implements HttpHandler {
         @Override
@@ -56,19 +64,5 @@ public class WebServer {
             webServerThread.setName(t.getRequestURI().getQuery());
             webServerThread.start();
         }
-    }
-
-    public static String getHostname() {
-        String hostname = "";
-        try
-        {
-            hostname = InetAddress.getLocalHost().getHostName();
-        }
-        catch (UnknownHostException e)
-        {
-            System.err.println("Hostname can not be resolved!");
-            e.printStackTrace();
-        }
-        return hostname;
     }
 }

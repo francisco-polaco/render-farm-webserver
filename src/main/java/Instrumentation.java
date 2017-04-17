@@ -10,10 +10,6 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.TreeMap;
 
-/**
- * Created by diogo on 11-04-2017.
- */
-
 class Branch {
     BigInteger taken = BigInteger.ZERO;
     BigInteger not_taken = BigInteger.ZERO;

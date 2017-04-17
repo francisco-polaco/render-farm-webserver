@@ -19,13 +19,23 @@ public class WebServerThread extends Thread {
         parameterMap = new TreeMap<>();
         Random random = new Random();
         String suffix;
-        synchronized (WebServer.suffixesInUse){
-            do{
+        synchronized (WebServer.suffixesInUse) {
+            do {
                 suffix = String.valueOf(random.nextInt());
-            }while(WebServer.suffixesInUse.contains(suffix));
+            } while (WebServer.suffixesInUse.contains(suffix));
             WebServer.suffixesInUse.add(suffix);
         }
         filenameSuffix = suffix;
+    }
+
+    public static void parseRequest(String query, TreeMap<String, String> paramsMap) {
+        String[] args = query.split("&");
+        for (String arg : args) {
+            String[] parameters = arg.split("=");
+            if (parameters.length == 2) {
+                paramsMap.put(parameters[0], parameters[1]);
+            }
+        }
     }
 
     @Override
@@ -49,22 +59,22 @@ public class WebServerThread extends Thread {
             e.printStackTrace();
         }
         reply(outputFilename);
-        synchronized (WebServer.suffixesInUse){
+        synchronized (WebServer.suffixesInUse) {
             WebServer.suffixesInUse.remove(filenameSuffix);
         }
     }
 
     private void reply(String outputFilename) {
         final File f = new File(outputFilename);
-        if(f.exists()) {
+        if (f.exists()) {
             dispatch(f);
-            new Thread(){
+            new Thread() {
                 @Override
                 public void run() {
                     f.delete();
                 }
             }.start();
-        }else {
+        } else {
             try {
                 writeResponse(httpExchange, "Ups... We lost your rendered file!");
             } catch (IOException e) {
@@ -88,16 +98,6 @@ public class WebServerThread extends Thread {
             writeResponse(httpExchange, response);
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    public static void parseRequest(String query, TreeMap<String, String> paramsMap) {
-        String[] args = query.split("&");
-        for (String arg : args) {
-            String[] parameters = arg.split("=");
-            if (parameters.length == 2) {
-                paramsMap.put(parameters[0], parameters[1]);
-            }
         }
     }
 
