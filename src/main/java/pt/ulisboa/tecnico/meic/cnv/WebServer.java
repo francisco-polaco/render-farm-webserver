@@ -27,19 +27,9 @@ public class WebServer {
         String port = cmd.getOptionValue("p");
         if (port != null) PORT = Integer.valueOf(port);
 
-        new Thread() {
-            @Override
-            public void run() {
-                try {
-                    WebServerOriginal.main(new String[]{String.valueOf(PORT)});
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }.start();
-
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
         server.createContext("/r.html", new MyHandler());
+        server.createContext("/test", new TestHandler());
         server.setExecutor(null); // creates a default executor
         bindEnterToStop();
         System.out.println("Web Server is running on port " + PORT);
