@@ -1,14 +1,17 @@
 import BIT.highBIT.*;
-import pt.ulisboa.tecnico.meic.cnv.WebServerThread;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import pt.ulisboa.tecnico.meic.cnv.RepositoryService;
 import pt.ulisboa.tecnico.meic.cnv.WebServer;
+import pt.ulisboa.tecnico.meic.cnv.WebServerThread;
 import pt.ulisboa.tecnico.meic.cnv.dto.Metric;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.math.BigInteger;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.TreeMap;
+import java.util.*;
 
 class Branch {
     BigInteger taken = BigInteger.ZERO;
@@ -46,21 +49,30 @@ public class Instrumentation {
         }
     };
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ParseException {
+        ArrayList<String> arguments = new ArrayList<>(Arrays.asList(args));
 
-        File file_in = new File(classPath);
-        if(!file_in.exists()) {
-            System.err.println("You need to compile the classes first!");
-            return;
+        Options options = new Options();
+        options.addOption("i", false, "Instrument code");
+        options.addOption("p", false, "Instrument code");
+        CommandLine cmd = (new DefaultParser()).parse(options, args);
+
+        if(cmd.hasOption("i")) {
+            File file_in = new File(classPath);
+            if (!file_in.exists()) {
+                System.err.println("You need to compile the classes first!");
+                return;
+            }
+            instrumentRayTracer(file_in.list());
         }
+
+        arguments.remove("-i");
 
         // We use dynamoDb, only for Checkpoint/debug purposes
         // createMetricsFile();
 
-        instrumentRayTracer(file_in.list());
-
         try {
-            WebServer.main(args);
+            WebServer.main(arguments.toArray(new String[arguments.size()]));
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("Error calling the webserver!");
@@ -115,6 +127,11 @@ public class Instrumentation {
         // without file
         Branch data = branchStats();
         TreeMap<String, String> params = new TreeMap<>();
+
+        //Generate UUID in case Loadbalancer didn't provide one
+        if(!params.containsKey("requestid"))
+            params.put("requestid", UUID.randomUUID().toString());
+
         WebServerThread.parseRequest(Thread.currentThread().getName(), params);
 
         Metric metric = new Metric(
