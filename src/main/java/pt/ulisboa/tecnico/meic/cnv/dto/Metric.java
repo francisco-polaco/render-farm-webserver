@@ -9,28 +9,14 @@ public class Metric {
     private BigInteger m_count;
     private BigInteger taken;
     private BigInteger not_taken;
-    private String file;
-    private Integer sc;
-    private Integer sr;
-    private Integer wc;
-    private Integer wr;
-    private Integer coff;
-    private Integer roff;
 
-    public Metric(String instance, BigInteger m_count, BigInteger taken, BigInteger not_taken, String file, Integer sceneColumns,
-                  Integer sceneRows, Integer windowColumns, Integer windowRows, Integer columnOffset, Integer rowOffset) {
+    public Metric(String instance, BigInteger m_count, BigInteger taken, BigInteger not_taken) {
         this.instance = instance;
         this.m_count = m_count;
         this.taken = taken;
         this.not_taken = not_taken;
-        this.file = file;
-        this.sc = sceneColumns;
-        this.sr = sceneRows;
-        this.wc = windowColumns;
-        this.wr = windowRows;
-        this.coff = columnOffset;
-        this.roff = rowOffset;
     }
+
 
     @Override
     public String toString() {

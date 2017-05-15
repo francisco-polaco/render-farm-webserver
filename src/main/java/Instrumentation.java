@@ -7,11 +7,15 @@ import pt.ulisboa.tecnico.meic.cnv.RepositoryService;
 import pt.ulisboa.tecnico.meic.cnv.WebServer;
 import pt.ulisboa.tecnico.meic.cnv.WebServerThread;
 import pt.ulisboa.tecnico.meic.cnv.dto.Metric;
+import raytracer.RayTracer;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.math.BigInteger;
+import java.net.URL;
+import java.nio.file.*;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 class Branch {
     BigInteger taken = BigInteger.ZERO;
@@ -20,8 +24,9 @@ class Branch {
 
 public class Instrumentation {
 
-    private static final String classPath = System.getProperty("user.dir") + "/target/classes/raytracer/";
-    private static final String METRICS_FILE = "Metrics.txt";
+    private static final String PACKAGE_OF_INSTRUMENTATION = "raytracer/";
+    private static final String A_INSTRUMENTING_CLASS = "RayTracer.class";
+    private static String classPath;
     private static final RepositoryService repositoryService = new RepositoryService();
 
     /* ThreadLocal gives us local context for each thread in static variables */
@@ -57,7 +62,28 @@ public class Instrumentation {
         options.addOption("p", false, "Instrument code");
         CommandLine cmd = (new DefaultParser()).parse(options, args);
 
+        ClassLoader classLoader = RayTracer.class.getClassLoader();
+        URL url = classLoader.getResource(PACKAGE_OF_INSTRUMENTATION + A_INSTRUMENTING_CLASS);
+
         if(cmd.hasOption("i")) {
+             /*
+            String jarPath = null;
+            if(url.getPath().contains(".jar")){
+               try {
+                    jarPath = url.getPath().substring("file:".length(),url.getPath().indexOf("!"));
+                    extractJar(jarPath);
+                    classPath = jarPath.substring(0,jarPath.lastIndexOf("/") + 1).concat(PACKAGE_OF_INSTRUMENTATION);
+
+                } catch (IOException e) {
+                    System.err.println("Error finding the classes to instrument!");
+                    return;
+                }
+            }
+            else*/
+
+            classPath = url.getPath().substring(0,url.getPath().lastIndexOf("/") + 1);
+
+
             File file_in = new File(classPath);
             if (!file_in.exists()) {
                 System.err.println("You need to compile the classes first!");
@@ -67,9 +93,6 @@ public class Instrumentation {
         }
 
         arguments.remove("-i");
-
-        // We use dynamoDb, only for Checkpoint/debug purposes
-        // createMetricsFile();
 
         try {
             WebServer.main(arguments.toArray(new String[arguments.size()]));
@@ -114,40 +137,15 @@ public class Instrumentation {
     }
 
     public static synchronized void writeFile(String foo){
-        /*try {
-            PrintWriter out = new PrintWriter(new FileWriter(METRICS_FILE, true));
-            out.append(Thread.currentThread().getName() + "\n");
-            out.append("Methods: " + m_count.get() + "\n");
-            out.append(brachStatistics());
-            reset();
-            out.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-        // without file
         Branch data = branchStats();
-        TreeMap<String, String> params = new TreeMap<>();
-
-        //Generate UUID in case Loadbalancer didn't provide one
-        if(!params.containsKey("requestid"))
-            params.put("requestid", UUID.randomUUID().toString());
-
-        WebServerThread.parseRequest(Thread.currentThread().getName(), params);
 
         Metric metric = new Metric(
                 WebServer.getHostname(),
                 m_count.get(),
                 data.taken,
-                data.not_taken,
-                params.get("f"),
-                Integer.valueOf(params.get("sc")),
-                Integer.valueOf(params.get("sr")),
-                Integer.valueOf(params.get("wc")),
-                Integer.valueOf(params.get("wr")),
-                Integer.valueOf(params.get("coff")),
-                Integer.valueOf(params.get("roff")));
+                data.not_taken);
 
-        repositoryService.addMetric(params.get("requestid"), metric);
+        repositoryService.addMetric(Thread.currentThread().getName(), metric);
     }
 
     private static void reset() {
@@ -205,19 +203,28 @@ public class Instrumentation {
         return accumulate;
     }
 
-
-    // aux functions
-
-    private static void createMetricsFile() {
-        System.out.println("Creating the metrics file!");
-        File metricsFIle = new File(METRICS_FILE);
-        if(metricsFIle.exists())
-            metricsFIle.delete();
-        try {
-            metricsFIle.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
+    private static void extractJar(String path) throws IOException {
+        JarFile jar = new JarFile(path);
+        Enumeration<JarEntry> enumEntries = jar.entries();
+        while (enumEntries.hasMoreElements()) {
+            JarEntry file = (JarEntry) enumEntries.nextElement();
+            if(file.getName().startsWith("raytracer")) {
+                File f = new File(path.substring(0, path.lastIndexOf("/")) + File.separator + file.getName());
+                if (file.isDirectory()) {
+                    f.mkdir();
+                    continue;
+                }
+                InputStream is = jar.getInputStream(file);
+                FileOutputStream fos = new FileOutputStream(f);
+                while (is.available() > 0) {
+                    fos.write(is.read());
+                }
+                fos.close();
+                is.close();
+            }
         }
+        jar.close();
     }
+
 
 }
