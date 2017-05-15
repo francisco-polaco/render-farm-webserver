@@ -5,14 +5,12 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import pt.ulisboa.tecnico.meic.cnv.RepositoryService;
 import pt.ulisboa.tecnico.meic.cnv.WebServer;
-import pt.ulisboa.tecnico.meic.cnv.WebServerThread;
 import pt.ulisboa.tecnico.meic.cnv.dto.Metric;
 import raytracer.RayTracer;
 
 import java.io.*;
 import java.math.BigInteger;
 import java.net.URL;
-import java.nio.file.*;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -138,14 +136,16 @@ public class Instrumentation {
 
     public static synchronized void writeFile(String foo){
         Branch data = branchStats();
+        String url = Thread.currentThread().getName();
 
         Metric metric = new Metric(
                 WebServer.getHostname(),
+                url,
                 m_count.get(),
                 data.taken,
                 data.not_taken);
 
-        repositoryService.addMetric(Thread.currentThread().getName(), metric);
+        repositoryService.addMetric(String.valueOf(url.hashCode()), metric);
     }
 
     private static void reset() {

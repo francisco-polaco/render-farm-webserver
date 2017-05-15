@@ -6,12 +6,14 @@ import java.math.BigInteger;
 public class Metric {
 
     private String instance;
+    private String url;
     private BigInteger m_count;
     private BigInteger taken;
     private BigInteger not_taken;
 
-    public Metric(String instance, BigInteger m_count, BigInteger taken, BigInteger not_taken) {
+    public Metric(String instance, String url, BigInteger m_count, BigInteger taken, BigInteger not_taken) {
         this.instance = instance;
+        this.url = url;
         this.m_count = m_count;
         this.taken = taken;
         this.not_taken = not_taken;
