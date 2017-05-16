@@ -6,19 +6,31 @@ import java.math.BigInteger;
 public class Metric {
 
     private String instance;
-    private String url;
     private BigInteger m_count;
     private BigInteger taken;
     private BigInteger not_taken;
+    private String file;
+    private String sc;
+    private String sr;
+    private String wc;
+    private String wr;
+    private String coff;
+    private String roff;
 
-    public Metric(String instance, String url, BigInteger m_count, BigInteger taken, BigInteger not_taken) {
+    public Metric(String instance, BigInteger m_count, BigInteger taken, BigInteger not_taken, String file, String sceneColumns,
+                  String sceneRows, String windowColumns, String windowRows, String columnOffset, String rowOffset) {
         this.instance = instance;
-        this.url = url;
         this.m_count = m_count;
         this.taken = taken;
         this.not_taken = not_taken;
+        this.file = file;
+        this.sc = sceneColumns;
+        this.sr = sceneRows;
+        this.wc = windowColumns;
+        this.wr = windowRows;
+        this.coff = columnOffset;
+        this.roff = rowOffset;
     }
-
 
     @Override
     public String toString() {

@@ -1,16 +1,22 @@
 import BIT.highBIT.*;
+import com.google.common.hash.Hashing;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import pt.ulisboa.tecnico.meic.cnv.RepositoryService;
 import pt.ulisboa.tecnico.meic.cnv.WebServer;
+import pt.ulisboa.tecnico.meic.cnv.WebServerThread;
 import pt.ulisboa.tecnico.meic.cnv.dto.Metric;
 import raytracer.RayTracer;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -24,9 +30,8 @@ public class Instrumentation {
 
     private static final String PACKAGE_OF_INSTRUMENTATION = "raytracer/";
     private static final String A_INSTRUMENTING_CLASS = "RayTracer.class";
-    private static String classPath;
     private static final RepositoryService repositoryService = new RepositoryService();
-
+    private static String classPath;
     /* ThreadLocal gives us local context for each thread in static variables */
     private static ThreadLocal<BigInteger> m_count = new ThreadLocal<BigInteger>() {
         @Override
@@ -138,14 +143,30 @@ public class Instrumentation {
         Branch data = branchStats();
         String url = Thread.currentThread().getName();
 
+        TreeMap<String, String> params = new TreeMap<>();
+
+        WebServerThread.parseRequest(Thread.currentThread().getName(), params);
+
         Metric metric = new Metric(
                 WebServer.getHostname(),
-                url,
                 m_count.get(),
                 data.taken,
-                data.not_taken);
+                data.not_taken,
+                params.get("f"),
+                params.get("sc"),
+                params.get("sr"),
+                params.get("wc"),
+                params.get("wr"),
+                params.get("coff"),
+                params.get("roff"));
 
-        repositoryService.addMetric(String.valueOf(url.hashCode()), metric);
+
+        String id = Hashing.sha256()
+                .hashString(params.get("f") + params.get("sc") + params.get("sr") + params.get("wc") + params.get("wr") + params.get("coff") + params.get("roff"), StandardCharsets.UTF_8)
+                .toString();
+
+
+        repositoryService.addMetric(id, metric);
     }
 
     private static void reset() {
