@@ -8,7 +8,7 @@ public class Metric {
     private BigInteger m_count;
     private BigInteger taken;
     private BigInteger not_taken;
-    private String file;
+    private String model;
     private String sc;
     private String sr;
     private String wc;
@@ -21,7 +21,7 @@ public class Metric {
         this.m_count = m_count;
         this.taken = taken;
         this.not_taken = not_taken;
-        this.file = file;
+        this.model = file;
         this.sc = sceneColumns;
         this.sr = sceneRows;
         this.wc = windowColumns;

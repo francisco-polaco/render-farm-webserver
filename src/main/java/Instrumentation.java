@@ -114,6 +114,7 @@ public class Instrumentation {
 
     public static synchronized void mcount(int incr) {
         m_count.set(m_count.get().add(BigInteger.ONE));
+        TestHandler.addToWorkPerformed(BigInteger.ONE);
     }
 
     public static synchronized void writeFile(String foo){
@@ -136,7 +137,6 @@ public class Instrumentation {
                 params.get("roff"));
 
         repositoryService.addMetric(Thread.currentThread().getName(), metric);
-        TestHandler.addToWorkPerformed(m_count.get().add(data.taken).add(data.not_taken));
     }
 
     private static void reset() {
@@ -159,6 +159,7 @@ public class Instrumentation {
             b.taken = b.taken.add(BigInteger.ONE);
         else
             b.not_taken = b.not_taken.add(BigInteger.ONE);
+        TestHandler.addToWorkPerformed(BigInteger.ONE);
     }
 
     /* Just for compatibility with 1st delivery */
