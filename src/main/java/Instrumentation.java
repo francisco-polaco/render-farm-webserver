@@ -4,6 +4,7 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import pt.ulisboa.tecnico.meic.cnv.RepositoryService;
+import pt.ulisboa.tecnico.meic.cnv.TestHandler;
 import pt.ulisboa.tecnico.meic.cnv.WebServer;
 import pt.ulisboa.tecnico.meic.cnv.WebServerThread;
 import pt.ulisboa.tecnico.meic.cnv.dto.Metric;
@@ -24,6 +25,7 @@ public class Instrumentation {
     private static final String PACKAGE_OF_INSTRUMENTATION = "raytracer/";
     private static final String A_INSTRUMENTING_CLASS = "RayTracer.class";
     private static final RepositoryService repositoryService = new RepositoryService();
+    public static BigInteger workPerformed = BigInteger.ZERO;
     private static String classPath;
     /* ThreadLocal gives us local context for each thread in static variables */
     private static ThreadLocal<BigInteger> m_count = new ThreadLocal<BigInteger>() {
@@ -52,7 +54,6 @@ public class Instrumentation {
 
     public static void main(String[] args) throws ParseException {
         ArrayList<String> arguments = new ArrayList<>(Arrays.asList(args));
-
         Options options = new Options();
         options.addOption("i", false, "Instrument code");
         options.addOption("p", false, "Instrument code");
@@ -117,7 +118,6 @@ public class Instrumentation {
 
     public static synchronized void writeFile(String foo){
         Branch data = branchStats();
-        String url = Thread.currentThread().getName();
 
         TreeMap<String, String> params = new TreeMap<>();
 
@@ -136,6 +136,7 @@ public class Instrumentation {
                 params.get("roff"));
 
         repositoryService.addMetric(Thread.currentThread().getName(), metric);
+        TestHandler.addToWorkPerformed(m_count.get().add(data.taken).add(data.not_taken));
     }
 
     private static void reset() {
@@ -192,5 +193,6 @@ public class Instrumentation {
         }
         return accumulate;
     }
+
 
 }
