@@ -24,7 +24,8 @@ mvn exec:java -Dexec.args="-i"
 
 # Execute
 ```
-mvn exec:java
+mvn exec:java [-Dexec.args="-p PORT"]
 ```
 
+Default port is 8000
 
