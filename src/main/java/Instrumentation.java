@@ -1,5 +1,4 @@
 import BIT.highBIT.*;
-import com.google.common.hash.Hashing;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
@@ -11,15 +10,9 @@ import pt.ulisboa.tecnico.meic.cnv.dto.Metric;
 import raytracer.RayTracer;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 class Branch {
     BigInteger taken = BigInteger.ZERO;
@@ -69,24 +62,7 @@ public class Instrumentation {
         URL url = classLoader.getResource(PACKAGE_OF_INSTRUMENTATION + A_INSTRUMENTING_CLASS);
 
         if(cmd.hasOption("i")) {
-             /*
-            String jarPath = null;
-            if(url.getPath().contains(".jar")){
-               try {
-                    jarPath = url.getPath().substring("file:".length(),url.getPath().indexOf("!"));
-                    extractJar(jarPath);
-                    classPath = jarPath.substring(0,jarPath.lastIndexOf("/") + 1).concat(PACKAGE_OF_INSTRUMENTATION);
-
-                } catch (IOException e) {
-                    System.err.println("Error finding the classes to instrument!");
-                    return;
-                }
-            }
-            else*/
-
             classPath = url.getPath().substring(0,url.getPath().lastIndexOf("/") + 1);
-
-
             File file_in = new File(classPath);
             if (!file_in.exists()) {
                 System.err.println("You need to compile the classes first!");
@@ -148,7 +124,6 @@ public class Instrumentation {
         WebServerThread.parseRequest(Thread.currentThread().getName(), params);
 
         Metric metric = new Metric(
-                WebServer.getHostname(),
                 m_count.get(),
                 data.taken,
                 data.not_taken,
@@ -160,13 +135,7 @@ public class Instrumentation {
                 params.get("coff"),
                 params.get("roff"));
 
-
-        String id = Hashing.sha256()
-                .hashString(params.get("f") + params.get("sc") + params.get("sr") + params.get("wc") + params.get("wr") + params.get("coff") + params.get("roff"), StandardCharsets.UTF_8)
-                .toString();
-
-
-        repositoryService.addMetric(id, metric);
+        repositoryService.addMetric(Thread.currentThread().getName(), metric);
     }
 
     private static void reset() {
@@ -223,29 +192,5 @@ public class Instrumentation {
         }
         return accumulate;
     }
-
-    private static void extractJar(String path) throws IOException {
-        JarFile jar = new JarFile(path);
-        Enumeration<JarEntry> enumEntries = jar.entries();
-        while (enumEntries.hasMoreElements()) {
-            JarEntry file = (JarEntry) enumEntries.nextElement();
-            if(file.getName().startsWith("raytracer")) {
-                File f = new File(path.substring(0, path.lastIndexOf("/")) + File.separator + file.getName());
-                if (file.isDirectory()) {
-                    f.mkdir();
-                    continue;
-                }
-                InputStream is = jar.getInputStream(file);
-                FileOutputStream fos = new FileOutputStream(f);
-                while (is.available() > 0) {
-                    fos.write(is.read());
-                }
-                fos.close();
-                is.close();
-            }
-        }
-        jar.close();
-    }
-
 
 }

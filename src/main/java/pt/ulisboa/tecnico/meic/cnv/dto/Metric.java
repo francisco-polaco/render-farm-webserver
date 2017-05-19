@@ -5,7 +5,6 @@ import java.math.BigInteger;
 
 public class Metric {
 
-    private String instance;
     private BigInteger m_count;
     private BigInteger taken;
     private BigInteger not_taken;
@@ -17,9 +16,8 @@ public class Metric {
     private String coff;
     private String roff;
 
-    public Metric(String instance, BigInteger m_count, BigInteger taken, BigInteger not_taken, String file, String sceneColumns,
+    public Metric(BigInteger m_count, BigInteger taken, BigInteger not_taken, String file, String sceneColumns,
                   String sceneRows, String windowColumns, String windowRows, String columnOffset, String rowOffset) {
-        this.instance = instance;
         this.m_count = m_count;
         this.taken = taken;
         this.not_taken = not_taken;
